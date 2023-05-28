@@ -1,6 +1,10 @@
 # Meta TOT - Meta Tree of Thoughts
 Meta TOT (Meta Tree of Thoughts) is an aims to enhances the Tree of Thoughts (TOT) language algorithm by using a secondary agent to critique and improve the primary agent's prompts. This innovative approach allows the primary agent to generate more accurate and relevant responses based on the feedback from the secondary agent.
 
+# Architectural 
+
+[Architectural overview in figma](https://www.figma.com/file/IlXAyYdu7HOYM4wUYVVB0U/META-TOT?type=whiteboard&node-id=0%3A1&t=xbtnQTA8uBhnLCU4-1)
+
 
 # Introduction
 The Meta TOT project aims to improve the performance of language models by using a secondary agent to critique and update the prompts of the primary agent. This approach allows the primary agent to generate more accurate and relevant responses based on the feedback from the secondary agent.

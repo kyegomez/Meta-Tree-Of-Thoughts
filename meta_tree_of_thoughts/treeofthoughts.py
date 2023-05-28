@@ -15,6 +15,8 @@ class TreeofThoughts:
         self.tree: Dict[str, Dict[str, float]] = {
             "nodes": {}
         }
+    
+
 
     def solve(self, initial_prompt: str, 
               num_thoughts: Optional[int] = 3, 
@@ -25,7 +27,6 @@ class TreeofThoughts:
               max_iterations: Optional[int] = 40, 
               convergence_threshold: Optional[float] = None, 
               convergence_count: Optional[int] = None) -> str:
-        start_time = time.time()
         self.file_name = f"logs/tree_of_thoughts_output_{self.search_algorithm}.json"
         try:
             best_thoughts = ""
