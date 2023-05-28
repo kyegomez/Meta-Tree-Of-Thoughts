@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import openai
 import langchain
-from tree_of_thoughts import TreeofThoughts
+from treeofthoughts import TreeofThoughts
 from langchain import OpenAI, LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 
