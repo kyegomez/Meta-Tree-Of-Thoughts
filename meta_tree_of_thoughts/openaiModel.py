@@ -1,107 +1,93 @@
-from abc import ABC, abstractmethod
+import os
 import openai
-import langchain
-from tree_of_thoughts import TreeofThoughts
-from langchain import OpenAI, LLMChain, PromptTemplate
-from langchain.memory import ConversationBufferWindowMemory
+import time
+import concurrent.futures
 
+from abc import ABC, abstractmethod
 
 class AbstractLanguageModel(ABC):
     @abstractmethod
     def generate_thoughts(self, state, k):
         pass
 
-    @abstractmethod 
+    @abstractmethod
     def evaluate_states(self, states):
         pass
 
-#tree of thoughts
-
-
-class MetaAgent(AbstractLanguageModel):
-    def __init__(self, model: AbstractLanguageModel):
-        self.model = model
-
-    def generate_thoughts(self, state, k):
-        thoughts = self.model.generate_thoughts(state, k)
-        return thoughts
-    
-    def evaluate_states(self, states):
-        evaluated_states = self.model.evaluate_states(states)
-        new_prompt = self.updated_prompt(evaluated_states)
-        return new_prompt
-    
-    def update_prompt(self, evaluated_states):
-        #critique the prompt based on the thought + it's evaluated state => create more explict prompt 
-        #init the meta chain 
-        meta_chain = self.initalize_meta_chain()
-
-        #get the chast history from the evauated states 
-        chat_history = self.get_chat_history(evaluated_states)
-
-        #predict the meta output
-        meta_output = meta_chain.predict(chat_history=chat_history)
-
-        #gte the new instructions from the meta output
-        new_instructions = self.get_new_instructions(meta_output)
-
-        return new_instructions
-    
-
-    def initalize_meta_agent(self):
-        meta_template="""
-        An AI Assistant has just had the below interactions with an user. Assistant followed their "Instructions" closely. 
-        Your job is to critique the Assistants performance and then revise the instructions so that the AI 
-        Assistant would quickly and correctly respond in the future.
-
-        ### 
-
-        {chat_history}
-        
-        ###
-        Please reflect on these interactions.
-
-        You should critique the AI Assistants performance. What could the AI Assistant have done better?
-        What should the Assistant remember about this user? Are there things this user always wants?
-        Indicate this with "Critique: ...".
-
-        You should revise the Instructions so that Assistant would quickly and correctly respond in the future.
-        The AI assistants goal is to return the most reliable evaluated thought in the shortest amount of time to satisfy the user in as 
-        few interactions as possible. The AI Assistant will only see the new Instructions, not the interaction
-        history, so anything important must be summarized in the Instructios. Don't forget any important details in 
-        the current Instructions! Indicate the new instructions by "Instructions: ...".
-        
-        """
-
-        meta_prompt = PromptTemplate(
-            input_variables=['chat_history'],
-            template=meta_template
-        )
-
-        meta_chain = LLMChain(
-            llm=self.model,
-            prompt=meta_prompt,
-            verbose=True
-        )
-        return meta_chain
-
-    def get_chat_history(self, evaluated_states):
-        #extract the chat history from the evalued state
-        chat_history = "all the thoughts + their evaluated states "
-        return chat_history
-    
-    def get_new_instructions(self, meta_output):
-        delimiter = "Instructions:"
-        new_instructions = meta_output[meta_output.find(delimiter) + len(delimiter):]
-        return new_instructions\
-    
-
-
-
-
-
-
 class OpenAILanguageModel(AbstractLanguageModel):
+    def __init__(self, api_key, strategy="cot", evaluation_strategy="value", api_base="", api_model="", enable_ReAct_prompting=True):
+        if api_key == "" or api_key == None:
+            api_key = os.environ.get("OPENAI_API_KEY", "")
+        if api_key != "":
+            openai.api_key = api_key
+        else:
+            raise Exception("Please provide OpenAI API key")
+
+        if api_base == ""or api_base == None:
+            api_base = os.environ.get("OPENAI_API_BASE", "")  # if not set, use the default base path of "https://api.openai.com/v1"
+        if api_base != "":
+            # e.g. https://api.openai.com/v1/ or your custom url
+            openai.api_base = api_base
+            print(f'Using custom api_base {api_base}')
+            
+        if api_model == "" or api_model == None:
+            api_model = os.environ.get("OPENAI_API_MODEL", "")
+        if api_model != "":
+            self.api_model = api_model
+        else:
+            self.api_model = "text-davinci-003"
+        print(f'Using api_model {self.api_model}')
+
+        self.use_chat_api = 'gpt' in self.api_model
+
+        # reference : https://www.promptingguide.ai/techniques/react
+        self.ReAct_prompt = ''
+        if enable_ReAct_prompting:
+            self.ReAct_prompt = "Write down your observations in format 'Observation:xxxx', then write down your thoughts in format 'Thoughts:xxxx'."
+        
+        self.strategy = strategy
+        self.evaluation_strategy = evaluation_strategy
+
+    def openai_api_call_handler(self, prompt, max_tokens, temperature, k=1, stop=None):
+        while True:
+            try:
+                if self.use_chat_api:
+                    messages = [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                    response = openai.ChatCompletion.create(
+                        model=self.api_model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                else:
+                    response = openai.Completion.create(
+                        engine=self.api_model,
+                        prompt=prompt,
+                        n=k,
+                        max_tokens=max_tokens,
+                        stop=stop,
+                        temperature=temperature,
+                    )
+                with open("openai.logs", 'a') as log_file:
+                    log_file.write("\n" + "-----------" + '\n' +"Prompt : "+ prompt+"\n")
+                return response
+            except openai.error.RateLimitError as e:
+                sleep_duratoin = os.environ.get("OPENAI_RATE_TIMEOUT", 30)
+                print(f'{str(e)}, sleep for {sleep_duratoin}s, set it by env OPENAI_RATE_TIMEOUT')
+                time.sleep(sleep_duratoin)
+
+    def openai_choice2text_handler(self, choice):
+        if self.use_chat_api:
+            text = choice['message']['content']
+        else:
+            text = choice.text.strip()
+        return text
+    
     def generate_text(self, prompt, k):
         if self.use_chat_api:
             thoughts = []
@@ -197,3 +183,23 @@ class OpenAILanguageModel(AbstractLanguageModel):
         else:
             raise ValueError("Invalid evaluation strategy. Choose 'value' or 'vote'.")
     # def solution(self, states, initial_prompt):
+
+class OptimizedOpenAILanguageModel(OpenAILanguageModel):
+    def __init__(self, api_key, strategy="cot", evaluation_strategy="value", cache_enabled=True, api_base="", api_model="", enable_ReAct_prompting=False):
+        super().__init__(api_key, strategy, evaluation_strategy, api_base, api_model, enable_ReAct_prompting)
+        self.cache_enabled = cache_enabled
+        self.thought_cache = {}
+        self.state_evaluation_cache = {}
+
+    def parallel_generate_thoughts(self, states, k):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            thoughts = list(executor.map(lambda state: self.generate_thoughts(state, k), states))
+            print(f"Parallel generated thoughts: {thoughts}")
+        return thoughts
+
+    def parallel_evaluate_states(self, states, inital_prompt):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            state_values = list(executor.map(self.evaluate_states, states, inital_prompt))
+            print(f"Parallel evaluated state values: {state_values}")
+        return state_values
+    
