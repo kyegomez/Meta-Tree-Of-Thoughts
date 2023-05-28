@@ -22,22 +22,14 @@ class MetaAgent(AbstractLanguageModel):
     def __init__(self, model: AbstractLanguageModel):
         self.model = model
 
-    def generate_thoughts(self, state, k):
-        thoughts = self.model.generate_thoughts(state, k)
-        return thoughts
-    
-    def evaluate_states(self, states):
-        evaluated_states = self.model.evaluate_states(states)
-        new_prompt = self.updated_prompt(evaluated_states)
-        return new_prompt
-    
-    def update_prompt(self, evaluated_states):
+
+    def update_prompt(self, thoughts, evaluated_states):
         #critique the prompt based on the thought + it's evaluated state => create more explict prompt 
         #init the meta chain 
         meta_chain = self.initalize_meta_chain()
 
         #get the chast history from the evauated states 
-        chat_history = self.get_chat_history(evaluated_states)
+        chat_history = self.get_chat_history(thoughts, evaluated_states)
 
         #predict the meta output
         meta_output = meta_chain.predict(chat_history=chat_history)
@@ -78,14 +70,18 @@ class MetaAgent(AbstractLanguageModel):
             template=meta_template
         )
 
+        print(meta_prompt)
+
         meta_chain = LLMChain(
             llm=self.model,
             prompt=meta_prompt,
             verbose=True
         )
+        
+        print(meta_chain)
         return meta_chain
 
-    def get_chat_history(self, evaluated_states):
+    def get_chat_history(self, get_chat_history, evaluated_states):
         #extract the chat history from the evalued state
         chat_history = "all the thoughts + their evaluated states "
         return chat_history
@@ -119,7 +115,7 @@ class OpenAILanguageModel(AbstractLanguageModel):
 
 
 
-    def generate_thoughts(self, state, k, inital_prompt):
+    def generate_thoughts(self, state, k, inital_prompt, updatedPrompt):
         if (type(state) == str):
             state_text = state
         else:
@@ -129,7 +125,10 @@ class OpenAILanguageModel(AbstractLanguageModel):
         # prompt = f"Given the current state of reasoning: \n\n\n'{state_text}'\n\n\nGenerate the next best coherent thought to achieve the reasoning process and get the solution: "
         # prompt = f"Based on the current state of reasoning: \n\n\n'{state_text} Provide the next coherent thought that will help progress the reasoning process and reach an soluton "
         # prompt = f"These are the thoughts you've had: \n\n\n{state_text}, provide the next coherent thought that will help advance the reasoning process and reach an solution for this problem {inital_prompt}. Think sharply, think out of the box, predict failure. Do not leave any open questions. Unleash your mind."
+
+        #we can just make this like this: prompt = {meta.agent.response(state_text, initial_prompt)}
         prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
+
 
         prompt += self.ReAct_prompt
         # print(prompt)

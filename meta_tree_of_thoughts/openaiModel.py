@@ -42,7 +42,7 @@ class OpenAILanguageModel(AbstractLanguageModel):
 
         # reference : https://www.promptingguide.ai/techniques/react
         self.ReAct_prompt = ''
-        if enable_ReAct_prompting:
+        if enable_ReAct_prompting: 
             self.ReAct_prompt = "Write down your observations in format 'Observation:xxxx', then write down your thoughts in format 'Thoughts:xxxx'."
         
         self.strategy = strategy
@@ -118,9 +118,9 @@ class OpenAILanguageModel(AbstractLanguageModel):
         prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
 
         prompt += self.ReAct_prompt
-        # print(prompt)
+
         thoughts = self.generate_text(prompt, k)
-        # print(thoughts)
+        
         print(f"Generated thoughts: {thoughts}")
         return thoughts
 
