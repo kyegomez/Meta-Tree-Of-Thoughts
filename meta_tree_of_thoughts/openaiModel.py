@@ -15,27 +15,21 @@ class AbstractLanguageModel(ABC):
         pass
 
 class OpenAILanguageModel(AbstractLanguageModel):
-    def __init__(self, api_key, strategy="cot", evaluation_strategy="value", api_base="", api_model="", enable_ReAct_prompting=True):
+    def __init__(self, api_key, strategy="cot", evaluation_strategy="value", api_model="", enable_ReAct_prompting=True):
         if api_key == "" or api_key == None:
             api_key = os.environ.get("OPENAI_API_KEY", "")
         if api_key != "":
             openai.api_key = api_key
         else:
             raise Exception("Please provide OpenAI API key")
-
-        if api_base == ""or api_base == None:
-            api_base = os.environ.get("OPENAI_API_BASE", "")  # if not set, use the default base path of "https://api.openai.com/v1"
-        if api_base != "":
-            # e.g. https://api.openai.com/v1/ or your custom url
-            openai.api_base = api_base
-            print(f'Using custom api_base {api_base}')
-            
+        
         if api_model == "" or api_model == None:
             api_model = os.environ.get("OPENAI_API_MODEL", "")
         if api_model != "":
             self.api_model = api_model
         else:
             self.api_model = "text-davinci-003"
+
         print(f'Using api_model {self.api_model}')
 
         self.use_chat_api = 'gpt' in self.api_model
