@@ -1,26 +1,15 @@
 from abc import ABC, abstractmethod
 import openai
 import langchain
-from treeofthoughts import TreeofThoughts
 from langchain import OpenAI, LLMChain, PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 
 
-class AbstractLanguageModel(ABC):
-    @abstractmethod
-    def generate_thoughts(self, state, k):
-        pass
-
-    @abstractmethod 
-    def evaluate_states(self, states):
-        pass
-
 #tree of thoughts
 
 
-class MetaAgent(AbstractLanguageModel):
-    def __init__(self, model: AbstractLanguageModel):
-        self.model = model
+class MetaAgent():
+    def __init__(self):
         self.initalize_meta_agent()
 
     def get_new_instructions(meta_output):
@@ -47,22 +36,22 @@ class MetaAgent(AbstractLanguageModel):
         Tap into your mind's full potential and make certain no open questions remain."
 
         meta_template="""
-        You need to change the following thinking instructions; `{old_instructions}` and make it more explicit and descriptive based on increasing its likelihood of achieving the user goal:
-        `{user_goal}`
+        You need to change the following thinking instructions; '{old_instructions}' and make it more explicit and descriptive based on increasing its likelihood of achieving the user goal:
+        '{user_goal}'
 
         Thinking instructions will be used by an AI assistant to help it think through next step for achieving the user goal, but the above instructions are not good enough.
-        You have to make them tailored towards the user goal: `{user_goal}`.
+        You have to make them tailored towards the user goal: '{user_goal}'.
         
-        An AI model has just had the below interactions with a user, using the above thinking instructions to achieve the user's goal. Model did not generate thoughts reliable enough to achieve the user goal `{user_goal}`
+        An AI model has just had the below interactions with a user, using the above thinking instructions to achieve the user's goal. Model did not generate thoughts reliable enough to achieve the user goal '{user_goal}'
         Your job is to critique the model's performance using the old thinking instructions and then revise the instructions so that the AI 
         model would quickly and correctly respond in the future to achieve the user goal.
 
         ###
         Old thinking instructions to modify:
-        ```
+        '''
         {old_instructions}
-        ```
-        The variables between `{` and `}` have to appaer in the new instructions as they will serve as placeholders for the AI assistant's inputs. MAKE SURE TO KEEP ALL VARIABLES BETWEEN '{' '}'
+        '''
+        The variables between '{' and '}' have to appaer in the new instructions as they will serve as placeholders for the AI assistant's inputs. MAKE SURE TO KEEP ALL VARIABLES BETWEEN '{' '}'
 
         ### 
         AI model's interaction history with the user

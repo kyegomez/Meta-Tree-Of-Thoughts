@@ -6,12 +6,13 @@ import argparse
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
-from thinkingAgent import ThinkingAgent
+from meta_tree_of_thoughts.thinkingAgent import ThinkingAgent
 
 
 class TreeofThoughts:
     def __init__(self, model, search_algorithm):
         self.model = model
+        self.thinkingAgent = ThinkingAgent(self.model )
         self.search_algorithm = search_algorithm
         self.tree: Dict[str, Dict[str, float]] = {
             "nodes": {}
@@ -65,10 +66,18 @@ class TreeofThoughts:
         current_states = [initial_prompt]
         state_values = {}
         for step in range(1, max_steps + 1):
-            selected_states = []
             for state in current_states:
                 thoughts = self.model.generate_thoughts(state, num_thoughts, initial_prompt)
-                evaluated_thoughts = self.model.evaluate_states({thought: 0 for thought in thoughts}, initial_prompt)
+                newStates = []
+                for thought in thoughts:
+                    flattened_state = (state, thought)
+                    if not (type(state) == str):
+                        flattened_state = (*state, thought)
+                    newStates.append(flattened_state)
+
+                evaluated_thoughts = self.model.evaluate_states(newStates, initial_prompt)
+
+                selected_states = []
                 for thought, value in evaluated_thoughts.items():
                     if value >= pruning_threshold:
                         flattened_state = (state, thought)
@@ -165,6 +174,3 @@ class TreeofThoughts:
                 print(f'tree info: {tree_info}')
 
         return tree_info
-
-
-model = ThinkingAgent(input="What are 3 ")

@@ -5,16 +5,9 @@ import concurrent.futures
 
 from abc import ABC, abstractmethod
 
-class AbstractLanguageModel(ABC):
-    @abstractmethod
-    def generate_thoughts(self, state, k):
-        pass
 
-    @abstractmethod
-    def evaluate_states(self, states):
-        pass
 
-class OpenAILanguageModel(AbstractLanguageModel):
+class OpenAILanguageModel():
     def __init__(self, api_key, strategy="cot", evaluation_strategy="value", api_model="", enable_ReAct_prompting=True):
         if api_key == "" or api_key == None:
             api_key = os.environ.get("OPENAI_API_KEY", "")

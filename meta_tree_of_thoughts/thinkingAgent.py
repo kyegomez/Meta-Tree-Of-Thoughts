@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
-
-from metaAgent import MetaAgent
+import random
+from meta_tree_of_thoughts.metaAgent import MetaAgent
 class AbstractLanguageModel(ABC):
     @abstractmethod
     def generate_text(self, prompt):
@@ -9,11 +9,11 @@ class AbstractLanguageModel(ABC):
 
 class ThinkingAgent:
 
-    def __init__(self, model: AbstractLanguageModel, MetaAgent: MetaAgent, strategy="cot", evaluation_strategy="value"):
+    def __init__(self, model: AbstractLanguageModel, strategy="cot", evaluation_strategy="value"):
         self.strategy = strategy
         self.evaluation_strategy = evaluation_strategy
         self.model = model
-        self.MetaAgent = MetaAgent
+        self.MetaAgent = MetaAgent()
 
     def generate_thoughts(self, state, k, initial_prompt):
         if (type(state) == str):
@@ -26,7 +26,10 @@ class ThinkingAgent:
         prompt.replace("{state_text}", state_text)
         prompt.replace("{initial_prompt}", initial_prompt)
         thoughts = [self.model.generate_text(prompt) for i in range(0, k)]
-
+        #randomly choosing one thought to give as the example of conversation
+        chosen_thought = random.choice(thoughts)
+        chat_history = f"AI:\n\n {prompt} \n Generated thought from prompt:\n {chosen_thought} "
+        self.MetaAgent.update_prompt(chat_history, initial_prompt)
         return thoughts
 
         
@@ -51,7 +54,7 @@ class ThinkingAgent:
 
             latest_generated_thought = state[-1]
             
-            prompt = f"""To achieve the following goal: `{inital_prompt}` value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
+            prompt = f"""To achieve the following goal: '{inital_prompt}' value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
             Past thoughts:\n\n
             {old_thoughts}\n       
             Evaluate the latest thought as a value between 0 and 1 based on how likely it is it achieve the inital goal: '{inital_prompt}'\n
