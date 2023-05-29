@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod
 
+from metaAgent import MetaAgent
 class AbstractLanguageModel(ABC):
     @abstractmethod
     def generate_text(self, prompt):
@@ -8,21 +9,22 @@ class AbstractLanguageModel(ABC):
 
 class ThinkingAgent:
 
-    def __init__(self, model: AbstractLanguageModel, metaModel: strategy="cot", evaluation_strategy="value"):
+    def __init__(self, model: AbstractLanguageModel, MetaAgent: MetaAgent, strategy="cot", evaluation_strategy="value"):
         self.strategy = strategy
         self.evaluation_strategy = evaluation_strategy
         self.model = model
-        self.metaModel = metaModel
+        self.MetaAgent = MetaAgent
 
-    def generate_thoughts(self, state, k, inital_prompt):
+    def generate_thoughts(self, state, k, initial_prompt):
         if (type(state) == str):
             state_text = state
         else:
             state_text = '\n'.join(state)
         
         #this needs to be in meta agent prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
-        prompt = self.thinking_prompt
-
+        prompt = self.MetaAgent.thinking_prompt
+        prompt.replace("{state_text}", state_text)
+        prompt.replace("{initial_prompt}", initial_prompt)
         thoughts = [self.model.generate_text(prompt) for i in range(0, k)]
 
         return thoughts
@@ -43,17 +45,13 @@ class ThinkingAgent:
 
         state_values = {}
         for state in states:
-            if (type(state) == str):
-                state_text = state
-            else:
-                state_text = '\n'.join(state)
             print("We receive a state of type", type(state), "For state: ", state, "\n\n")
             
             old_thoughts = '\n'.join(state[:-1])
 
             latest_generated_thought = state[-1]
             
-            prompt = f"""To achieve {inital_prompt} value the context of the past thoughts you had AS AN FLOAT BETWEEN 0 AND 1\n
+            prompt = f"""To achieve the following goal: `{inital_prompt}` value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
             Past thoughts:\n\n
             {old_thoughts}\n       
             Evaluate the latest thought as a value between 0 and 1 based on how likely it is it achieve the inital goal: '{inital_prompt}'\n

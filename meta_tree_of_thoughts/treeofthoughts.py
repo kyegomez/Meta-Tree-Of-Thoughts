@@ -1,12 +1,13 @@
 import os
 import time
 import json
-from openaiModel import OptimizedOpenAILanguageModel
 import logging 
 import argparse
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from thinkingAgent import ThinkingAgent
+
 
 class TreeofThoughts:
     def __init__(self, model, search_algorithm):
@@ -15,8 +16,6 @@ class TreeofThoughts:
         self.tree: Dict[str, Dict[str, float]] = {
             "nodes": {}
         }
-    
-
 
     def solve(self, initial_prompt: str, 
               num_thoughts: Optional[int] = 3, 
@@ -168,23 +167,4 @@ class TreeofThoughts:
         return tree_info
 
 
-
-#does not output state after each thought --- idk why -- needs work
-class OptimizedTreeofThoughts(TreeofThoughts):
-    def solve(self, x, k=None, T=None, b=None, vth=None, timeout=None, confidence_threshold=None, max_iterations=None, convergence_threshold=None, convergence_count=None):
-        start_time = time.time()
-        print(f'Start time {start_time}')
-        if self.search_algorithm == 'BFS':
-            while timeout is None or time.time() - start_time < timeout:
-                result = self.tot_bfs(x, k, T, b, pruning_threshold=0.5)
-                print(f'result in optimized tree of thoughts: {result}')
-                if result:
-                    return result
-        elif self.search_algorithm == 'DFS':
-            while timeout is None or time.time() - start_time < timeout:
-                result = self.tot_dfs(x, k, T, vth, confidence_threshold=confidence_threshold, max_iterations=max_iterations, convergence_threshold=convergence_threshold, convergence_count=convergence_count)
-                if result:
-                    return result
-        else:
-            raise ValueError("Invalid search algorithm. Choose 'BFS' or 'DFS'.")
-
+model = ThinkingAgent(input="What are 3 ")
