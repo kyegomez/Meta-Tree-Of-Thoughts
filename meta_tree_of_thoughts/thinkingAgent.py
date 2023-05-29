@@ -8,14 +8,11 @@ class AbstractLanguageModel(ABC):
 
 class ThinkingAgent:
 
-    def __init__(self, model: AbstractLanguageModel, strategy="cot", evaluation_strategy="value"):
+    def __init__(self, model: AbstractLanguageModel, metaModel: strategy="cot", evaluation_strategy="value"):
         self.strategy = strategy
         self.evaluation_strategy = evaluation_strategy
         self.model = model
-        self.thinking_prompt = "Considering the thoughts you've had until now:\n \
-        \n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. \
-        Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. \
-        Tap into your mind's full potential and make certain no open questions remain."
+        self.metaModel = metaModel
 
     def generate_thoughts(self, state, k, inital_prompt):
         if (type(state) == str):
@@ -66,9 +63,9 @@ class ThinkingAgent:
             
             # prompt = f"Given the current thought of reasoning: '{state_text}', evaluate its value as a float between 0 and 1, become very pessimistic think of potential adverse risks on the probability of this state of reasoning achieveing {inital_prompt} and DO NOT RESPOND WITH ANYTHING ELSE: OTHER THAN AN FLOAT"
 
-            response = self.openai_api_call_handler(prompt, 10, 1)
+            response = self.model.generate_text(prompt)
             try:
-                value_text = self.openai_choice2text_handler(response.choices[0])
+                value_text = response
                 # print(f'state: {value_text}')
                 value = float(value_text)
                 print(f"value: {value}")
@@ -76,13 +73,16 @@ class ThinkingAgent:
                 value = 0  # Assign a default value if the conversion fails
             state_values[state] = value
         
-        #for meta agent
-        chat_history = f"{chain_of_thoughts: value}"
-        #architectural
-        #1 ======> chain of thoughts + values for every thought
-        #2 =====> 1 thought + 1 state => new prompt
-        #3 =====> every thought is evaluated + the chain of thougths + values are then evaluated
 
-        self.thinking_prompt = self.metaAgent.updateInstructions(chat_history)
+
         return state_values
     
+
+# #for meta agent
+# chat_history = f"{chain_of_thoughts: value}"
+# #architectural
+# #1 ======> chain of thoughts + values for every thought
+# #2 =====> 1 thought + 1 state => new prompt
+# #3 =====> every thought is evaluated + the chain of thougths + values are then evaluated
+
+# self.thinking_prompt = self.metaAgent.updateInstructions(chat_history)
