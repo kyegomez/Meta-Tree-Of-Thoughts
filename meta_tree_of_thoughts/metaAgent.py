@@ -36,32 +36,33 @@ class MetaAgent():
         Tap into your mind's full potential and make certain no open questions remain."
 
         meta_template="""
-        You need to change the following thinking instructions; '{old_instructions}' and make it more explicit and descriptive based on increasing its likelihood of achieving the user goal:
-        '{user_goal}'
+        You need to change the following thinking instructions; {old_instructions} and make it more explicit and descriptive based on increasing its likelihood of achieving the user goal:
+        {user_goal}
 
         Thinking instructions will be used by an AI assistant to help it think through next step for achieving the user goal, but the above instructions are not good enough.
-        You have to make them tailored towards the user goal: '{user_goal}'.
+        You have to make them tailored towards the user goal: {user_goal}.
         
-        An AI model has just had the below interactions with a user, using the above thinking instructions to achieve the user's goal. Model did not generate thoughts reliable enough to achieve the user goal '{user_goal}'
+        An AI model has just had the below interactions with a user, using the above thinking instructions to achieve the user's goal. Model did not generate thoughts reliable enough to achieve the user goal {user_goal}
         Your job is to critique the model's performance using the old thinking instructions and then revise the instructions so that the AI 
         model would quickly and correctly respond in the future to achieve the user goal.
 
         ###
         Old thinking instructions to modify:
-        '''
+        
         {old_instructions}
-        '''
-        The variables between '{' and '}' have to appaer in the new instructions as they will serve as placeholders for the AI assistant's inputs. MAKE SURE TO KEEP ALL VARIABLES BETWEEN '{' '}'
+        
+        The variables between { and } have to appear in the new instructions as they will serve as placeholders for the AI assistant's inputs. MAKE SURE TO KEEP ALL VARIABLES BETWEEN { }
 
         ### 
         AI model's interaction history with the user
+        
         {chat_history}
         
         ###
         Please reflect on these interactions.
 
-        You should critique the model's performance in this interaction in respect to achieving the user's goals. What could the AI model have done better?
-        Indicate this with "Critique: ...".
+        You should critique the models performance in this interaction in respect to achieving the user's goals. What could the AI model have done better?
+        Indicate this with "Critique: ....
 
         You should then revise the Instructions so that Assistant would quickly and correctly respond in the future.
         The AI model's goal is to return the most reliable evaluated thought in the shortest amount of time to work to achieve the user's goal as 
