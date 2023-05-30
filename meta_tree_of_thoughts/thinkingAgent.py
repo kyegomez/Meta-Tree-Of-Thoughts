@@ -16,28 +16,22 @@ class ThinkingAgent:
         self.MetaAgent = MetaAgent()
 
     def generate_thoughts(self, state, k, initial_prompt):
-        if (type(state) == str):
-            state_text = state
-        else:
-            state_text = '\n'.join(state)
+        state_text = ' ==> '.join(state)
         
         #this needs to be in meta agent prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
         prompt = self.MetaAgent.thinking_prompt
-        prompt.replace("{state_text}", state_text)
-        prompt.replace("{initial_prompt}", initial_prompt)
+        prompt = prompt.replace("{old_thoughts}", state_text)
+        prompt = prompt.replace("{objective}", initial_prompt)
         thoughts = [self.model.generate_text(prompt) for i in range(0, k)]
         #randomly choosing one thought to give as the example of conversation
         chosen_thought = random.choice(thoughts)
-        chat_history = f"AI:\n\n {prompt} \n Generated thought from prompt:\n {chosen_thought} "
+        chat_history = f"AI model:\n {prompt} \n Generated thought from prompt:\n {chosen_thought} "
         self.MetaAgent.update_prompt(chat_history, initial_prompt)
         return thoughts
 
         
     def generate_solution(self, initial_prompt, chain_of_thoughts):
-        if (type(chain_of_thoughts) == str):
-            state_text = chain_of_thoughts
-        else:
-            state_text = '\n'.join(chain_of_thoughts)
+        state_text = ' ==> '.join(chain_of_thoughts)
         
         prompt = f"Considering the reasoning provided:\n\n'{state_text}'\n\nDevise the best possible solution for the task: {initial_prompt}"
         answer = self.model.generate_text(prompt)
@@ -50,7 +44,7 @@ class ThinkingAgent:
         for state in states:
             print("We receive a state of type", type(state), "For state: ", state, "\n\n")
             
-            old_thoughts = '\n'.join(state[:-1])
+            old_thoughts = ' ==> '.join(state[:-1])
 
             latest_generated_thought = state[-1]
             

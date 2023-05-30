@@ -8,11 +8,13 @@ logger = logging.getLogger(__name__)
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from meta_tree_of_thoughts.thinkingAgent import ThinkingAgent
 
+# for each rejected path store the reason for rejection and then pass the reason -> thought generator function
+# thought -> evaluated (0.3, 'This is a bad_decision = 2 + 23 + 232323 does not = 24') -> thought generato_functin
 
 class TreeofThoughts:
     def __init__(self, model, search_algorithm):
         self.model = model
-        self.thinkingAgent = ThinkingAgent(self.model )
+        self.thinkingAgent = ThinkingAgent(self.model)
         self.search_algorithm = search_algorithm
         self.tree: Dict[str, Dict[str, float]] = {
             "nodes": {}
@@ -63,11 +65,11 @@ class TreeofThoughts:
         self.save_tree_to_json(self.file_name)    
         
     def tot_bfs(self, initial_prompt, num_thoughts, max_steps, max_states, pruning_threshold):
-        current_states = [initial_prompt]
+        current_states = ["I need to think about ways to achieve the following user objective "+initial_prompt]
         state_values = {}
         for step in range(1, max_steps + 1):
             for state in current_states:
-                thoughts = self.model.generate_thoughts(state, num_thoughts, initial_prompt)
+                thoughts = self.thinkingAgent.generate_thoughts(state, num_thoughts, initial_prompt)
                 newStates = []
                 for thought in thoughts:
                     flattened_state = (state, thought)
@@ -75,7 +77,7 @@ class TreeofThoughts:
                         flattened_state = (*state, thought)
                     newStates.append(flattened_state)
 
-                evaluated_thoughts = self.model.evaluate_states(newStates, initial_prompt)
+                evaluated_thoughts = self.thinkingAgent.evaluate_states(newStates, initial_prompt)
 
                 selected_states = []
                 for thought, value in evaluated_thoughts.items():
@@ -113,8 +115,8 @@ class TreeofThoughts:
         def dfs(state, step):
             nonlocal consecutive_convergence_count, prev_best_value, iteration_count, output
             if step > max_steps:
-                thought = self.model.generate_thoughts(state, 1, initial_prompt)
-                value = self.model.evaluate_states({state}, initial_prompt)[state]
+                thought = self.thinkingAgent.generate_thoughts(state, 1, initial_prompt)
+                value = self.thinkingAgent.evaluate_states({state}, initial_prompt)[state]
                 output.append((thought, value))
 
                 if confidence_threshold is not None and value >= confidence_threshold:
@@ -134,23 +136,19 @@ class TreeofThoughts:
 
                 return False
 
-            for next_state in sorted(self.model.generate_thoughts(state, num_thoughts, initial_prompt)):
-                state_value = self.model.evaluate_states({next_state}, initial_prompt)[next_state]
+            for next_state in sorted(self.thinkingAgent.generate_thoughts(state, num_thoughts, initial_prompt)):
+                state_value = self.thinkingAgent.evaluate_states({next_state}, initial_prompt)[next_state]
                 logger.info(f"State: {next_state}, Value: {state_value}")
 
                 if state_value > value_threshold and (pruning_threshold is None or state_value >= pruning_threshold):
-                    if (type(state) == str):
-                        child = (state, next_state)
-                    else:
-                        child = (*state, next_state)
-
+                    child = (*state, next_state)
                     if dfs(child, step + 1):
                         return True
 
             self.save_tree_to_json(file_name)
             return False
 
-        dfs(initial_prompt, 1)
+        dfs([initial_prompt], 1)
         best_state = max(output, key=lambda x: x[1])
         return best_state[0]
 
