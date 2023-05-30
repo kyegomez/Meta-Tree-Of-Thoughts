@@ -42,18 +42,19 @@ class ThinkingAgent:
 
         state_values = {}
         for state in states:
-            print("We receive a state of type", type(state), "For state: ", state, "\n\n")
+            print("Evaluating state: ", state, "\n")
             
             old_thoughts = ' ==> '.join(state[:-1])
 
             latest_generated_thought = state[-1]
             
-            prompt = f"""To achieve the following goal: '{inital_prompt}' value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
+            prompt = f"""To achieve the following goal: '{inital_prompt}', value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
             Past thoughts:\n\n
             {old_thoughts}\n       
-            Evaluate the latest thought as a value between 0 and 1 based on how likely it is it achieve the inital goal: '{inital_prompt}'\n
+            Evaluate the latest thought as a value between 0 and 1 based on how likely it made concrete and visible progress in achieving: '{inital_prompt}'\n
             Latest thought:\n
             {latest_generated_thought}\n
+            If the thoughts or the last thought is not directly concretely making fast progress in achieving the goal, give it a lower score.
             Evaluation AS A FLOAT BETWEEN 0 and 1:\n DO NOT RETURN ANYTHING ELSE"""
             
             # prompt = f"Given the current thought of reasoning: '{state_text}', evaluate its value as a float between 0 and 1, become very pessimistic think of potential adverse risks on the probability of this state of reasoning achieveing {inital_prompt} and DO NOT RESPOND WITH ANYTHING ELSE: OTHER THAN AN FLOAT"

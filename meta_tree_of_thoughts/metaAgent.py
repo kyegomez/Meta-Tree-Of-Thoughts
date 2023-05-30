@@ -29,7 +29,7 @@ class MetaAgent():
         meta_output = chain.run(chat_history=chat_history, old_instructions=self.thinking_prompt, objective=user_goal)
         #gte the new instructions from the meta output
         new_instructions = self.get_new_instructions(meta_output)
-        print(new_instructions)
+        print("New thinking instructions: ", new_instructions)
         variables_required = ["{old_thoughts}"]
         has_required_variables = all(var in variables_required for var in variables_required)
         if not has_required_variables:
@@ -40,19 +40,19 @@ class MetaAgent():
 
     def initalize_meta_agent(self):
         self.thinking_prompt = "Considering the thoughts you've had until now:\n\
-\n'{old_thoughts}'\n\nDevise the next coherent thought that will aid in advancing the reasoning process and to achieve the following goal '{objective}'.\
-Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries.\
-Tap into your mind's full potential and make certain no open questions remain."
+\n'{old_thoughts}'\n\n Think about the next best step to achive {objective}.\
+If you already have enough thoughts to achieve the goal, start improving some of the steps and verify that you are perfectly meeting the goal '{objective}'.\n Next step:"
 
         meta_template="""
-You need to change the following thinking instructions;\n'{old_instructions}'\nAnd make it more explicit and descriptive based on increasing its likelihood of achieving the following specified user goal '{objective}'
+You need to change the following thinking instructions;\n'{old_instructions}'\n To make the thoughts directly solving the user objective '{objective}'
 
-Thinking instructions will be used by an AI assistant to help it think through next step for achieving the user goal, but the above instructions are not good enough.
-You have to make them tailored towards the user goal: '{objective}'. Make the instructions adapted to the problem statement.
+Thinking instructions will be used by an AI assistant to direct it to create the thoughts to progress in achieving the user goal: '{objective}'.
+The thinking instructions have to lead to thoughts that make the AI progress fast in totally achieving the user goal '{objective}'. The thoughts generated have to be sharp and concrete, and lead to concrete visible progress in achieving the user's goal.
 
-An AI model has just had the below interactions with a user, using the above thinking instructions to achieve the user's goal. Model did not generate thoughts reliable enough to achieve the user goal '{objective}'
+
+An AI model has just had the below interactions with a user, using the above thinking instructions to progress in achieve the user's goal. AI Model's generated thoughts don't lead to good enough progress in achieving: '{objective}'
 Your job is to critique the model's performance using the old thinking instructions and then revise the instructions so that the AI 
-model would quickly and correctly respond in the future to achieve the user goal.
+model would quickly and correctly respond in the future to concretely achieve the user goal.
 
 Old thinking instructions to modify:
 
@@ -69,13 +69,14 @@ AI model's interaction history with the user:
 
 Please reflect on these interactions.
 
-You should critique the models performance in this interaction in respect to achieving the user's goals. What could the AI model have done better?
+You should critique the models performance in this interaction in respect to why the thoughts it gave aren't directly leading to achieving the user's goals. What could the AI model have done better to be more direct and think better?
 Indicate this with "Critique: ....
 
 You should then revise the Instructions so that Assistant would quickly and correctly respond in the future.
-The AI model's goal is to return the most reliable evaluated thought in the shortest amount of time to work to achieve the user's goal as
-few interactions as possible. The AI Assistant will only see the new Instructions, not the interaction
-history, so anything important must be summarized in the Instructions. Don't forget any important details in
+The AI model's goal is to return the most reliable thought that leads to fast progressing in achieving the user's goal in as few interactions as possible.
+The thoughts generated should not turn around and do nothing, so if you notice that the instructions are leading to no progress in solving the user goal, modify the instructions so it leads to concrete progress.
+The AI Assistant will only see the new Instructions the next time it thinks through the same problem, not the interaction
+history, so anything important to do must be summarized in the Instructions. Don't forget any important details in
 the current Instructions! Indicate the new instructions by "Instructions: ..."
 
 VERY IMPORTANT: The string '{{old_thoughts'}} and the string '{{objective}}' have to appear in the new instructions as they will respectively be used by the AI model to store it's old thoughts, and the user's goal when it runs that instruction
@@ -89,18 +90,18 @@ VERY IMPORTANT: The string '{{old_thoughts'}} and the string '{{objective}}' hav
         self.LLM = ChatOpenAI(temperature=0)
         #get the chast history from the evauated states 
 
-myModel = MetaAgent()
+# myModel = MetaAgent()
 
-userGoal = "Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7"
+# userGoal = "Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7"
 
-chatHistory = "Considering the thoughts you've had until now:\n \
-\n'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7\n The first thought is to identify the weak squares in this position'\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to 'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7'. \
-Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. \
- Tap into your mind's full potential and make certain no open questions remain.\
- Thought generated:\
- What does black want to do next and what can white respond in that situation?"
-print(chatHistory)
-myModel.update_prompt(chatHistory, userGoal)
+# chatHistory = "Considering the thoughts you've had until now:\n \
+# \n'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7\n The first thought is to identify the weak squares in this position'\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to 'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7'. \
+# Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. \
+#  Tap into your mind's full potential and make certain no open questions remain.\
+#  Thought generated:\
+#  What does black want to do next and what can white respond in that situation?"
+# print(chatHistory)
+# myModel.update_prompt(chatHistory, userGoal)
 
 
     # def run(self, task, max_iters=3, max_meta_iters=5, threshold=0.9):

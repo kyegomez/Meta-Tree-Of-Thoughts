@@ -28,66 +28,41 @@ class OpenAILanguageModel():
         self.use_chat_api = 'gpt' in self.api_model
 
         # reference : https://www.promptingguide.ai/techniques/react
-        self.ReAct_prompt = ''
-        if enable_ReAct_prompting: 
-            self.ReAct_prompt = "Write down your observations in format 'Observation:xxxx', then write down your thoughts in format 'Thoughts:xxxx'."
-        
+
         self.strategy = strategy
         self.evaluation_strategy = evaluation_strategy
 
-    def openai_api_call_handler(self, prompt, max_tokens, temperature, k=1, stop=None):
+    def openai_api_call_handler(self, prompt, max_tokens, temperature):
         while True:
             try:
-                if self.use_chat_api:
-                    messages = [
+                messages = [
                         {
                             "role": "user",
                             "content": prompt
                         }
                     ]
-                    response = openai.ChatCompletion.create(
-                        model=self.api_model,
-                        messages=messages,
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                    )
-                else:
-                    response = openai.Completion.create(
-                        engine=self.api_model,
-                        prompt=prompt,
-                        n=k,
-                        max_tokens=max_tokens,
-                        stop=stop,
-                        temperature=temperature,
-                    )
+                response = openai.ChatCompletion.create(
+                    model=self.api_model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                text = response['choices'][0]['message']['content'].strip()
                 with open("openai.logs", 'a') as log_file:
-                    log_file.write("\n" + "-----------" + '\n' +"Prompt : "+ prompt+"\n")
-                return response
+                    log_file.write("\n" + "-----------" + '\n' +"Prompt : "+ prompt+"\n"+"Response:\n"+text)
+
+                return text
+
             except openai.error.RateLimitError as e:
                 sleep_duratoin = os.environ.get("OPENAI_RATE_TIMEOUT", 30)
                 print(f'{str(e)}, sleep for {sleep_duratoin}s, set it by env OPENAI_RATE_TIMEOUT')
                 time.sleep(sleep_duratoin)
 
-    def openai_choice2text_handler(self, choice):
-        if self.use_chat_api:
-            text = choice['message']['content']
-        else:
-            text = choice.text.strip()
-        return text
+
     
-    def generate_text(self, prompt, k):
-        if self.use_chat_api:
-            thoughts = []
-            for _ in range(k):
-                response = self.openai_api_call_handler(prompt, 50, 0.5, k)
-                text = self.openai_choice2text_handler(response.choices[0])
-                thoughts += [text]
-            return thoughts
-            
-        else:
-            response = self.openai_api_call_handler(prompt, 50, 0.5, k)
-            thoughts = [self.openai_choice2text_handler(choice) for choice in response.choices]
-            return thoughts
+    def generate_text(self, prompt,):
+        text = self.openai_api_call_handler(prompt, 1000, 0.5)
+        return text
 
     # def solution(self, states, initial_prompt):
 

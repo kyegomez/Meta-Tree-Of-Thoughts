@@ -45,7 +45,7 @@ class TreeofThoughts:
                     self.save_tree_to_json(self.file_name)
                     best_thoughts = result
             if best_thoughts:
-                solution = self.model.generate_solution(initial_prompt, best_thoughts)
+                solution = self.thinkingAgent.generate_solution(initial_prompt, best_thoughts)
                 if solution:
                     return solution
             else:
@@ -59,41 +59,35 @@ class TreeofThoughts:
             self.save_tree_to_json(self.file_name)
     
     def logNewState(self, state, evaluation):
-        if not (type(state) == str):
-            state = " | ".join(state)
+        state = " ==> ".join(state)
         self.tree["nodes"][state] = evaluation
         self.save_tree_to_json(self.file_name)    
         
     def tot_bfs(self, initial_prompt, num_thoughts, max_steps, max_states, pruning_threshold):
-        current_states = ["I need to think about ways to achieve the following user objective "+initial_prompt]
+        current_states = [[f"My goal is to offer the best response to this user request '{initial_prompt}'"]]
         state_values = {}
         for step in range(1, max_steps + 1):
             for state in current_states:
                 thoughts = self.thinkingAgent.generate_thoughts(state, num_thoughts, initial_prompt)
                 newStates = []
                 for thought in thoughts:
-                    flattened_state = (state, thought)
-                    if not (type(state) == str):
-                        flattened_state = (*state, thought)
+                    flattened_state = (*state, thought)
                     newStates.append(flattened_state)
 
                 evaluated_thoughts = self.thinkingAgent.evaluate_states(newStates, initial_prompt)
 
                 selected_states = []
-                for thought, value in evaluated_thoughts.items():
+                for state, value in evaluated_thoughts.items():
                     if value >= pruning_threshold:
-                        flattened_state = (state, thought)
-                        if not (type(state) == str):
-                            flattened_state = (*state, thought)
-                        selected_states.append(flattened_state)
-                        state_values[flattened_state] = value
-                        self.logNewState(flattened_state, value)
+                        selected_states.append(state)
+                        state_values[state] = value
+                        self.logNewState(state, value)
             if(len(selected_states) >1):
                 current_states = selected_states[:max_states]
                 
         if (len(current_states) == 1):
             return initial_prompt
-        print(current_states, state_values)
+        # print(current_states, state_values)
         best_state = max(current_states, key=lambda state: state_values[state])
         print(f'best_state: {best_state}')
 
@@ -148,7 +142,7 @@ class TreeofThoughts:
             self.save_tree_to_json(file_name)
             return False
 
-        dfs([initial_prompt], 1)
+        dfs([[initial_prompt]], 1)
         best_state = max(output, key=lambda x: x[1])
         return best_state[0]
 
