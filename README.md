@@ -1,5 +1,5 @@
 # Meta TOT - Meta Tree of Thoughts
-Meta TOT (Meta Tree of Thoughts) is an aims to enhances the Tree of Thoughts (TOT) language algorithm by using a secondary agent to critique and improve the primary agent's prompts. This innovative approach allows the primary agent to generate more accurate and relevant responses based on the feedback from the secondary agent.
+Meta TOT (Meta Tree of Thoughts) aims to enhance the Tree of Thoughts (TOT) language algorithm by using a secondary agent to critique and improve the primary agent's prompts. This innovative approach allows the primary agent to generate more accurate and relevant responses based on the feedback from the secondary agent.
 
 # Architectural 
 
