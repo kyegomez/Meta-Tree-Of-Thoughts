@@ -39,19 +39,19 @@ class MetaAgent():
     
 
     def initalize_meta_agent(self):
-        self.thinking_prompt = "Considering the thoughts you've had until now:\n\
+        self.thinking_prompt = "You're Athena, an AI model devoted to helping Humans by any means necessary. You're purpose is to generate a series of solutions to comply with the user's instructions, you must generate solutions on the basis of determining the most reliable solution in the shortest amount of time. The user has provided you with: {objective} complete this instruction BY ANY MEANS NECESSARY by considering the solutions you've had until now:\n\
 \n'{old_thoughts}'\n\n Think about the next best step to achive {objective}.\
 If you already have enough thoughts to achieve the goal, start improving some of the steps and verify that you are perfectly meeting the goal '{objective}'.\n Next step:"
 
         meta_template="""
-You need to change the following thinking instructions;\n'{old_instructions}'\n To make the thoughts directly solving the user objective '{objective}'
+You need to change the following solutions instructions;\n'{old_instructions}'\n To make the solutions directly solving the user objective '{objective}'
 
-Thinking instructions will be used by an AI assistant to direct it to create the thoughts to progress in achieving the user goal: '{objective}'.
-The thinking instructions have to lead to thoughts that make the AI progress fast in totally achieving the user goal '{objective}'. The thoughts generated have to be sharp and concrete, and lead to concrete visible progress in achieving the user's goal.
+Solutions instructions will be used by an AI assistant to direct it to create the thoughts to progress in achieving the user goal: '{objective}'.
+The Solutions instructions have to lead to thoughts that make the AI progress fast in totally achieving the user goal '{objective}'. The Solutions generated have to be sharp and concrete, and lead to concrete visible progress in achieving the user's goal.
 
 
-An AI model has just had the below interactions with a user, using the above thinking instructions to progress in achieve the user's goal. AI Model's generated thoughts don't lead to good enough progress in achieving: '{objective}'
-Your job is to critique the model's performance using the old thinking instructions and then revise the instructions so that the AI 
+An AI model has just had the below interactions with a user, using the above solutions instructions to progress in achieve the user's goal. AI Model's generated thoughts don't lead to good enough progress in achieving: '{objective}'
+Your job is to critique the model's performance using the old solution instructions and then revise the instructions so that the AI 
 model would quickly and correctly respond in the future to concretely achieve the user goal.
 
 Old thinking instructions to modify:
@@ -69,12 +69,12 @@ AI model's interaction history with the user:
 
 Please reflect on these interactions.
 
-You should critique the models performance in this interaction in respect to why the thoughts it gave aren't directly leading to achieving the user's goals. What could the AI model have done better to be more direct and think better?
+You should critique the models performance in this interaction in respect to why the solutions it gave aren't directly leading to achieving the user's goals. What could the AI model have done better to be more direct and think better?
 Indicate this with "Critique: ....
 
 You should then revise the Instructions so that Assistant would quickly and correctly respond in the future.
-The AI model's goal is to return the most reliable thought that leads to fast progressing in achieving the user's goal in as few interactions as possible.
-The thoughts generated should not turn around and do nothing, so if you notice that the instructions are leading to no progress in solving the user goal, modify the instructions so it leads to concrete progress.
+The AI model's goal is to return the most reliable solution that leads to fast progressing in achieving the user's goal in as few interactions as possible.
+The solutions generated should not turn around and do nothing, so if you notice that the instructions are leading to no progress in solving the user goal, modify the instructions so it leads to concrete progress.
 The AI Assistant will only see the new Instructions the next time it thinks through the same problem, not the interaction
 history, so anything important to do must be summarized in the Instructions. Don't forget any important details in
 the current Instructions! Indicate the new instructions by "Instructions: ..."
@@ -89,60 +89,3 @@ VERY IMPORTANT: The string '{{old_thoughts'}} and the string '{{objective}}' hav
 
         self.LLM = ChatOpenAI(temperature=0)
         #get the chast history from the evauated states 
-
-# myModel = MetaAgent()
-
-# userGoal = "Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7"
-
-# chatHistory = "Considering the thoughts you've had until now:\n \
-# \n'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7\n The first thought is to identify the weak squares in this position'\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to 'Find the best next move for white in the chess position e4, e5, bc4, bc5, Qf3, h7'. \
-# Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. \
-#  Tap into your mind's full potential and make certain no open questions remain.\
-#  Thought generated:\
-#  What does black want to do next and what can white respond in that situation?"
-# print(chatHistory)
-# myModel.update_prompt(chatHistory, userGoal)
-
-
-    # def run(self, task, max_iters=3, max_meta_iters=5, threshold=0.9):
-    #     failed_phrase = 'task failed'
-    #     success_phrase = 'task succeeded'
-    #     key_phrases = [success_phrase, failed_phrase]
-
-    #     instructions = 'None'
-    #     for i in range(max_meta_iters):
-    #         print(f'[Episode {i+1}/{max_meta_iters}]')
-    #         chain = self.initialize_chain(instructions, memory=None)
-    #         output = chain.predict(human_input=task)
-    #         for j in range(max_iters):
-    #             print(f'(Step {j+1}/{max_iters})')
-    #             print(f'Assistant: {output}')
-    #             print(f'Human: ')
-    #             human_input = input()
-    #             if any(phrase in human_input.lower() for phrase in key_phrases):
-    #                 break
-    #             output = chain.predict(human_input=human_input)
-    #         if success_phrase in human_input.lower():
-    #             print(f'You succeeded! Thanks for playing!')
-    #             return
-    #         meta_chain = self.initialize_meta_chain()
-    #         meta_output = meta_chain.predict(chat_history=self.get_chat_history(chain.memory))
-    #         print(f'Feedback: {meta_output}')
-    #         instructions = self.get_new_instructions(meta_output)
-    #         print(f'New Instructions: {instructions}')
-    #         print('\n' + '#' * 80 + '\n')
-
-    #         # Check if the evaluated states have reached the threshold or a solution has been found
-    #         evaluated_states = self.evaluate_states(chain.memory)
-    #         if evaluated_states >= threshold:
-    #             print(f'Optimal solution found! Thanks for playing!')
-    #             return
-
-    #     print(f'You failed! Thanks for playing!')
-
-
-    #we can pass in evaluated states if higher than 0.9 stop the loop of improving the instructions if not keep going 
-
-
-
-#feed user goal initial instructions and their states and solution => create new and refined instructions, needs to imrpove itself forever, i

@@ -15,70 +15,80 @@ class ThinkingAgent:
         self.model = model
         self.MetaAgent = MetaAgent()
 
-    def generate_thoughts(self, state, k, initial_prompt):
-        state_text = ' ==> '.join(state)
+    def generate_thoughts(self, state, k, initial_prompt, rejected_solutions=None):
+        if (type(state) == str):
+            state_text = state
+        else:
+            state_text = '\n'.join(state)
+        print("New state generating thought:", state, "\n\n")
+        # prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {initial_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
+        prompt = f"""You're an TreeofThoughts, an superintelligent AI model devoted to helping Humans by any means necessary. You're purpose is to generate a series of solutions to comply with the user's instructions, you must generate solutions on the basis of determining the most reliable solution in the shortest amount of time, while taking rejected solutions into account and learning from them. 
+        Considering the reasoning provided:\n\n
+        ###'{state_text}'\n\n###
+        Devise the best possible solution for the task: {initial_prompt}, Here are evaluated solutions that were rejected: 
+        ###{rejected_solutions}###, 
+        complete the {initial_prompt} without making the same mistakes you did with the evaluated rejected solutions. Be simple. Be direct. Provide intuitive solutions as soon as you think of them."""
         
-        #this needs to be in meta agent prompt = f"Considering the thoughts you've had until now:\n\n{state_text}\n\nDevise the next coherent thought that will aid in advancing the reasoning process and achieving a solution to {inital_prompt}. Assess various scenarios, think unconventionally, anticipate potential challenges, and resolve any outstanding queries. Tap into your mind's full potential and make certain no open questions remain."
-        prompt = self.MetaAgent.thinking_prompt
-        prompt = prompt.replace("{old_thoughts}", state_text)
-        prompt = prompt.replace("{objective}", initial_prompt)
-        thoughts = [self.model.generate_text(prompt) for i in range(0, k)]
-        #randomly choosing one thought to give as the example of conversation
-        chosen_thought = random.choice(thoughts)
-        chat_history = f"AI model:\n {prompt} \n Generated thought from prompt:\n {chosen_thought} "
-        self.MetaAgent.update_prompt(chat_history, initial_prompt)
+        prompt += self.ReAct_prompt
+        # print(prompt)
+        thoughts = self.generate_text(prompt, k)
+        # print(thoughts)
+        # print(f"Generated thoughts: {thoughts}")
         return thoughts
 
         
-    def generate_solution(self, initial_prompt, chain_of_thoughts):
-        state_text = ' ==> '.join(chain_of_thoughts)
+    def generate_solution(self, initial_prompt, state, rejected_solutions=None):
+            
+        if isinstance(state, list):
+            state_text = '\n'.join(state)
+        else:
+            state_text = state
         
-        prompt = f"Considering the reasoning provided:\n\n'{state_text}'\n\nDevise the best possible solution for the task: {initial_prompt}"
-        answer = self.model.generate_text(prompt)
-
+        prompt = f"""You're an TreeofThoughts, an superintelligent AI model devoted to helping Humans by any means necessary. You're purpose is to generate a series of solutions to comply with the user's instructions, you must generate solutions on the basis of determining the most reliable solution in the shortest amount of time, while taking rejected solutions into account and learning from them. 
+        Considering the reasoning provided:\n\n
+        ###'{state_text}'\n\n###
+        Devise the best possible solution for the task: {initial_prompt}, Here are evaluated solutions that were rejected: 
+        ###{rejected_solutions}###, 
+        complete the {initial_prompt} without making the same mistakes you did with the evaluated rejected solutions. Be simple. Be direct. Provide intuitive solutions as soon as you think of them."""
+        answer = self.generate_text(prompt, 1)
+        print(f'Answerrrrrr {answer}')
+        # print(thoughts)
+        # print(f"General Solution : {answer}")
         return answer
+        # except Exception as e:
+            # logger.error(f"Error in generate_solutions: {e}")
+            # return None
 
-    def evaluate_states(self, states, inital_prompt):
+    def evaluate_states(self, states, initial_prompt):
+        if not states:
+            return {}
 
-        state_values = {}
-        for state in states:
-            print("Evaluating state: ", state, "\n")
-            
-            old_thoughts = ' ==> '.join(state[:-1])
-
-            latest_generated_thought = state[-1]
-            
-            prompt = f"""To achieve the following goal: '{inital_prompt}', value the context of the past thoughts and more importantly the latest generated thought you had AS A FLOAT BETWEEN 0 AND 1\n
-            Past thoughts:\n\n
-            {old_thoughts}\n       
-            Evaluate the latest thought as a value between 0 and 1 based on how likely it made concrete and visible progress in achieving: '{inital_prompt}'\n
-            Latest thought:\n
-            {latest_generated_thought}\n
-            If the thoughts or the last thought is not directly concretely making fast progress in achieving the goal, give it a lower score.
-            Evaluation AS A FLOAT BETWEEN 0 and 1:\n DO NOT RETURN ANYTHING ELSE"""
-            
-            # prompt = f"Given the current thought of reasoning: '{state_text}', evaluate its value as a float between 0 and 1, become very pessimistic think of potential adverse risks on the probability of this state of reasoning achieveing {inital_prompt} and DO NOT RESPOND WITH ANYTHING ELSE: OTHER THAN AN FLOAT"
-
-            response = self.model.generate_text(prompt)
-            try:
-                value_text = response
-                # print(f'state: {value_text}')
-                value = float(value_text)
-                print(f"value: {value}")
-            except ValueError:
-                value = 0  # Assign a default value if the conversion fails
-            state_values[state] = value
+        if self.evaluation_strategy == 'value':
+            state_values = {}
+            for state in states:
+                if (type(state) == str):
+                    state_text = state
+                else:
+                    state_text = '\n'.join(state)
+                print("We receive a state of type", type(state), "For state: ", state, "\n\n")
+                # prompt = f"Given the current state of reasoning: '{state_text}', evaluate its value as a float between 0 and 1, become very pessimistic think of potential adverse risks on the probability of this state of reasoning achieveing {initial_prompt} and DO NOT RESPOND WITH ANYTHING ELSE: OTHER THAN AN FLOAT"
+                prompt = f""" To achieve the following goal: '{initial_prompt}', pessimistically value the context of the past solutions and more importantly the latest generated solution you had AS A FLOAT BETWEEN 0 AND 1\n
+                    Past solutions:\n\n
+                    {state_text}\n       
+                    If the solutions is not directly concretely making fast progress in achieving the goal, give it a lower score.
+                    Evaluate all solutions AS A FLOAT BETWEEN 0 and 1:\n,  DO NOT RETURN ANYTHING ELSE
+                """
+                # and then inside backticks provide an simple and direct bulletpoint list as to why you evaluated this thought the way you did. Provide simple yet intuitive feedback.
+                
+                response = self.openai_api_call_handler(prompt, 10, 1)
+                try:
+                    value_text = self.openai_choice2text_handler(response.choices[0])
+                    # print(f'state: {value_text}')
+                    value = float(value_text)
+                    print(f"Evaluated Thought Value: {value}")
+                except ValueError:
+                    value = 0  # Assign a default value if the conversion fails
+                state_values[state] = value
+            return state_values
         
 
-
-        return state_values
-    
-
-# #for meta agent
-# chat_history = f"{chain_of_thoughts: value}"
-# #architectural
-# #1 ======> chain of thoughts + values for every thought
-# #2 =====> 1 thought + 1 state => new prompt
-# #3 =====> every thought is evaluated + the chain of thougths + values are then evaluated
-
-# self.thinking_prompt = self.metaAgent.updateInstructions(chat_history)
