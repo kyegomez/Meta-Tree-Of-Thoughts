@@ -1,3 +1,11 @@
+# Agora
+Agora is an new open source Multi-Modality AI Research Organization devoted to advancing Humanity!
+
+![Agora banner](agora-banner.png)
+
+[Join our Agora discord and contribute to this project or 40+ others!](https://discord.gg/qUtxnK2NMf)
+
+
 # Meta TOT - Meta Tree of Thoughts
 Meta TOT (Meta Tree of Thoughts) aims to enhance the Tree of Thoughts (TOT) language algorithm by using a secondary agent to critique and improve the primary agent's prompts. This innovative approach allows the primary agent to generate more accurate and relevant responses based on the feedback from the secondary agent.
 
